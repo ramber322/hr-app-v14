@@ -932,7 +932,7 @@ const docsSubmitted = {
 {/* ═══ PROFILE DOCUMENTS ═══ */}
 {/* ═══ DOCUMENTS ═══ */}
 <div className="required-docs-section">
-  <h4>📄 Your Documents</h4>
+  <h4>📄 Submit Documents</h4>
   <p className="info-text" style={{ marginBottom: '12px' }}>
     Documents from your profile are used by default.{' '}
     
@@ -1038,7 +1038,7 @@ const docsSubmitted = {
       padding: '6px 10px',
       borderRadius: '6px'
     }}>
-      ⚠ You need to upload a PDS in your Profile to apply for this job.
+      ⚠ No PDS found on your profile. Upload one to apply for this job.
     </div>
   )}
 </div>

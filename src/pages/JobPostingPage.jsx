@@ -1287,6 +1287,7 @@ const handleDeleteJob = async () => {
                   borderRadius: '6px', 
                   display: 'flex',
     alignItems: 'center',
+    marginTop: '2px',
     gap: '6px',
                   cursor: 'pointer', 
                   fontWeight: '500',

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead, deleteNotification } from '../services/notificationService';
 import { CheckIcon } from '../components/icons/CustomIcons';
+import { NotificationIconApplicant } from "../components/icons/CustomIcons";
 
 
 function NotificationBell() {
@@ -364,10 +365,25 @@ const getNotificationIcon = (type) => {
               {loading ? (
                 <div className="loading-spinner">Loading...</div>
               ) : notifications.length === 0 ? (
-                <div className="notification-empty">
-                  <div className="icon">🔕</div>
-                  No notifications yet
-                </div>
+             <div 
+  className="notification-empty"
+  style={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    padding: '24px 0',
+    textAlign: 'center'
+  }}
+>
+  <div className="icon">
+    <NotificationIconApplicant size={58} color="#c7d2fe" />
+  </div>
+  <span style={{ fontSize: '13px', color: '#6c757d' }}>
+    No notifications yet
+  </span>
+</div>
               ) : (
                 notifications.map((notification) => (
                   <div

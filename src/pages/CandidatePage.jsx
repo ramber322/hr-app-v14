@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabase";
-import { DocumentListIcon } from "../components/icons/CustomIcons";
+import { DocumentListIcon, NewspaperIcon } from "../components/icons/CustomIcons";
 import Loader from '../components/Loader';
 
 export default function CandidatesPage() {
@@ -434,7 +434,7 @@ export default function CandidatesPage() {
   marginLeft: '-20px'
 }}>
   
-  <DocumentListIcon size={33} /> 
+  <NewspaperIcon size={33} color="#4F46E5" /> 
   Applications
 </h1>
           <p>View and manage all job applications across all postings</p>

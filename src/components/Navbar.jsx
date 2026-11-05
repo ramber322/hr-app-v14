@@ -10,8 +10,10 @@ import {
   ReportsIcon,
   ProfileIcon,
   LogoutIcon,
+  NewspaperIcon,
   BulletedListIcon,
   ApplicationsIcon
+  
 } from './icons/CustomIcons';
 import "../styles/Navbar.css";
 import chrmoLogo from '../assets/chrmo-official-seal.png';

@@ -6,11 +6,14 @@
   position: relative;
   padding: 20px;
   background: radial-gradient(178.94% 106.41% at 26.42% 106.41%, #E3F2FD 0%, rgba(255, 255, 255, 0) 71.88%), #FFFFFF;
-  /* Removed box-shadow */
   border-radius: 16px;
   transition: all 0.8s cubic-bezier(0.15, 0.83, 0.66, 1);
   cursor: pointer;
   overflow: hidden;
+
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(21, 101, 192, 0.08);   /* subtle blue-tinted shadow */
 }
 
 .weather-card:hover {

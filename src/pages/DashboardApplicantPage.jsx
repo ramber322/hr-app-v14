@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabase";
-import {ApplicantClockIcon, ApplicantNotesIcon, HandshakeIcon, ApplicantClipboardIcon } from "../components/icons/CustomIcons";
+import {ApplicantClockIcon, FireIcon, ApplicantNotesIcon, CalendarBookMarkIcon, ArrowRightIcon, ChevronRightIcon, AccountUserRoundIcon, HandshakeIcon, ApplicantClipboardIcon, NotificationIconApplicant, FeatherIcon, CheckInterviewIcon } from "../components/icons/CustomIcons";
 import locationLogo from '../assets/icon-location.png';
 import '/src/styles/DashboardApplicantPage.css';
 import mailBlackLogo from '../assets/mail-blue-icon.png';
@@ -13,8 +13,10 @@ import WeatherWidget from "../components/WeatherWidget";
 import Loader from '../components/Loader';
 
 export default function DashboardApplicant() {
+
+  
   const [documents, setDocuments] = useState(null);
-const [userProfile, setUserProfile] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
 
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -32,52 +34,52 @@ const [userProfile, setUserProfile] = useState(null);
   const [upcomingInterviews, setUpcomingInterviews] = useState([]);
 
   useEffect(() => {
-  const loadDashboard = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate('/login');
-      return;
-    }
+    const loadDashboard = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/login');
+        return;
+      }
 
-    const metadata = user.user_metadata || {};
-    const firstName = metadata.first_name || "";
-    const surname = metadata.surname || "";
-    setUserName(firstName && surname ? `${firstName} ${surname}` : user.email || "User");
+      const metadata = user.user_metadata || {};
+      const firstName = metadata.first_name || "";
+      const surname = metadata.surname || "";
+      setUserName(firstName && surname ? `${firstName} ${surname}` : user.email || "User");
 
-    const today = new Date();
-    setTodayDate(today.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }));
+      const today = new Date();
+      setTodayDate(today.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }));
 
-    await loadStats(user.id);
-    await loadRecentApplications(user.id);
-    await loadRecentNotifications(user.id);
-    await loadNewJobs();
-    await loadUpcomingInterviews(user.id);
-    
-    // 🆕 Load profile + documents
-    const { data: applicantData } = await supabase
-      .from('applicants')
-      .select(`
-        pds_file_url,
-        tor_file_url,
-        performance_rating_file_url,
-        phone,
-        address
-      `)
-      .eq('id', user.id)
-      .maybeSingle();
-    
-    setDocuments(applicantData || null);
-    setUserProfile(applicantData || null);
-    
-    setLoading(false);
-  };
+      await loadStats(user.id);
+      await loadRecentApplications(user.id);
+      await loadRecentNotifications(user.id);
+      await loadNewJobs();
+      await loadUpcomingInterviews(user.id);
+      
+      // Load profile + documents
+      const { data: applicantData } = await supabase
+        .from('applicants')
+        .select(`
+          pds_file_url,
+          tor_file_url,
+          performance_rating_file_url,
+          phone,
+          address
+        `)
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      setDocuments(applicantData || null);
+      setUserProfile(applicantData || null);
+      
+      setLoading(false);
+    };
 
-  loadDashboard();
-}, [navigate]);
+    loadDashboard();
+  }, [navigate]);
 
   const loadStats = async (userId) => {
     try {
@@ -251,18 +253,18 @@ const [userProfile, setUserProfile] = useState(null);
   };
 
   const formatClosingDate = (dateString) => {
-  if (!dateString) return "N/A";
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = date - now;                          // ← future = positive
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  
-  if (days < 0) return "Closed";
-  if (days === 0) return "Closes today";
-  if (days === 1) return "Closes tomorrow";
-  if (days < 7) return `Closes in ${days} days`;
-  return `Closes  ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-};
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = date - now;
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    
+    if (days < 0) return "Closed";
+    if (days === 0) return "Closes today";
+    if (days === 1) return "Closes tomorrow";
+    if (days < 7) return `Closes in ${days} days`;
+    return `Closes ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  };
 
   if (loading) {
     return (
@@ -276,53 +278,13 @@ const [userProfile, setUserProfile] = useState(null);
     );
   }
 
-  // Profile completeness computation — document-based
-const profileChecks = [
-  { 
-    label: 'Account created', 
-    done: true,
-    href: null,
-  },
-  { 
-    label: 'Contact information filled', 
-    done: !!(userProfile?.phone || userProfile?.address),
-    href: '/applicant/profile',
-  },
-  { 
-    label: 'Personal Data Sheet uploaded', 
-    done: !!documents?.pds_file_url,
-    href: '/applicant/profile',
-  },
-  { 
-    label: 'Transcript of Records uploaded', 
-    done: !!documents?.tor_file_url,
-    href: '/applicant/profile',
-  },
-  { 
-    label: 'Performance Rating uploaded', 
-    done: !!documents?.performance_rating_file_url,
-    href: '/applicant/profile',
-  },
-];
-const completedChecks = profileChecks.filter(c => c.done).length;
-const profilePercent = Math.round((completedChecks / profileChecks.length) * 100);
   return (
     <>
       <Navbar userRole="applicant" />
       <div className="dashboard-container">
 
-        {/* ═══════════════ MAGAZINE HERO HEADER ═══════════════ */}
-        <div style={{
-          background: 'linear-gradient(135deg, #1a3a5c 0%, #4F46E5 100%)',
-          borderRadius: '20px',
-          padding: '32px 36px',
-          marginBottom: '28px',
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: '0 8px 24px rgba(79, 70, 229, 0.25)'
-        }}>
-          {/* Decorative circles */}
+        {/* ═══════════════ HERO HEADER ═══════════════ */}
+        <div className="dashboard-hero">
           <div style={{
             position: 'absolute',
             top: '-50px',
@@ -346,37 +308,23 @@ const profilePercent = Math.round((completedChecks / profileChecks.length) * 100
             <div style={{ fontSize: '13px', opacity: 0.85, marginBottom: '6px', letterSpacing: '0.5px' }}>
               {todayDate}
             </div>
-            <h1 style={{
-              fontSize: '32px',
-              fontWeight: 700,
-              margin: 0,
-              marginBottom: '8px',
-              lineHeight: 1.2
-            }}>
-              Welcome back, {userName.split(' ')[0]} 
+            <h1 className="hero-title">
+              Welcome back, {userName.split(' ')[0]}
             </h1>
-            <p style={{ fontSize: '15px', opacity: 0.9, margin: 0, maxWidth: '520px' }}>
+            <p className="hero-subtitle">
               Here's what's happening with your job applications today.
             </p>
 
-            {/* Inline stats in hero */}
-            <div style={{
-              display: 'flex',
-              gap: '24px',
-              marginTop: '24px',
-              flexWrap: 'wrap',
-            }}>
+            <div className="hero-stats">
               {[
                 { label: 'Applications', value: stats.total },
                 { label: 'Pending', value: stats.pending },
                 { label: 'Interviews', value: stats.shortlisted },
                 { label: 'Hired', value: stats.hired }
               ].map((item, i) => (
-                <div key={i}>
-                  <div key={i} style={{ textAlign: 'center' }}>  {/* ← ADD THIS */}
-                  <div style={{ fontSize: '22px', fontWeight: 700 }}>{item.value}</div>
-                  <div style={{ fontSize: '12px', opacity: 0.8 }}>{item.label}</div>
-                  </div>
+                <div key={i} className="hero-stat">
+                  <div className="hero-stat-value">{item.value}</div>
+                  <div className="hero-stat-label">{item.label}</div>
                 </div>
               ))}
             </div>
@@ -384,56 +332,52 @@ const profilePercent = Math.round((completedChecks / profileChecks.length) * 100
         </div>
 
         {/* ═══════════════ MAGAZINE GRID ═══════════════ */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(12, 1fr)',
-          gap: '20px',
-          marginBottom: '24px'
-        }}>
+        <div className="magazine-grid">
 
-          {/* ─── LEFT COLUMN (8 cols) ─── */}
-          <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* ─── LEFT COLUMN ─── */}
+          <div className="magazine-left">
 
-            {/* HERO FEATURE CARD — Featured Job */}
+            {/* Featured Job */}
             {newJobs.length > 0 && (
-              <div style={{
-                background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)',
-                borderRadius: '16px',
-                padding: '24px 28px',
-                border: '1px solid #c7d2fe'
-              }}>
+              <div className="featured-card">
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: '16px'
+                  marginBottom: '16px',
+                  flexWrap: 'wrap',
+                  gap: '8px'
                 }}>
                   <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
                     background: '#4F46E5',
                     color: 'white',
                     padding: '4px 12px',
                     borderRadius: '20px',
                     fontSize: '11px',
                     fontWeight: 700,
-                    letterSpacing: '0.5px'
+                    letterSpacing: '0.5px',
+                    lineHeight: 1
                   }}>
-                    ✨ FEATURED OPPORTUNITY
+                    <FeatherIcon size={22} style={{ color: '#4ade80' }} />
+                    FEATURED OPPORTUNITY
                   </span>
-                  <span
-                    onClick={() => navigate('/applicant/jobs')}
-                    style={{ fontSize: '13px', color: '#4F46E5', fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    View All Jobs →
-                  </span>
+     <button
+  className="view-jobs-btn"
+  onClick={() => navigate('/applicant/jobs')}
+>
+  <span className="btn-icon">
+    
+  </span>
+  View Jobs
+  <span className="btn-badge">{newJobs.length}</span>
+</button>
                 </div>
-                <h2 style={{
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  color: '#1a3a5c',
-                  margin: '0 0 8px 0'
-                }}>
-                  {newJobs[0].position_title}
-                </h2>
+
+                <h2 className="featured-title">{newJobs[0].position_title}</h2>
+
                 <div style={{
                   display: 'flex',
                   gap: '20px',
@@ -453,11 +397,12 @@ const profilePercent = Math.round((completedChecks / profileChecks.length) * 100
                   )}
                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <img src={calendarminimalLogo} alt="" style={{ width: 14, height: 14 }} />
-                   {formatClosingDate(newJobs[0].closing_date)}
+                    {formatClosingDate(newJobs[0].closing_date)}
                   </span>
                 </div>
+
                 <button
-                  onClick={() => navigate(`/applicant/jobs`)}
+                  onClick={() => navigate('/applicant/jobs')}
                   style={{
                     background: '#4F46E5',
                     color: 'white',
@@ -472,27 +417,87 @@ const profilePercent = Math.round((completedChecks / profileChecks.length) * 100
                   onMouseEnter={(e) => e.currentTarget.style.background = '#4338ca'}
                   onMouseLeave={(e) => e.currentTarget.style.background = '#4F46E5'}
                 >
-                  Apply Now →
+                  Apply Now 
                 </button>
               </div>
             )}
 
-            {/* Recent Applications Card */}
+            {/* Recent Applications */}
             <div className="dashboard-card">
               <div className="card-header">
                 <h3>
                   <ApplicantNotesIcon size={24} style={{ color: '#1e293b' }} />
                   Recent Applications
                 </h3>
-                <span className="view-all" onClick={() => navigate('/applicant/applications')}>
-                  View All →
-                </span>
+         <button
+  onClick={() => navigate('/applicant/applications')}
+  style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#eef2ff',
+    color: '#4F46E5',
+    border: 'none',
+    borderRadius: '999px',
+    padding: stats.total > 0 ? '5px 6px 5px 14px' : '5px 14px',
+    fontSize: '12px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    fontFamily: 'inherit',
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.background = '#4F46E5';
+    e.currentTarget.style.color = 'white';
+    const b = e.currentTarget.querySelector('.badge');
+    if (b) { b.style.background = 'white'; b.style.color = '#4F46E5'; }
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.background = '#eef2ff';
+    e.currentTarget.style.color = '#4F46E5';
+    const b = e.currentTarget.querySelector('.badge');
+    if (b) { b.style.background = '#4F46E5'; b.style.color = 'white'; }
+  }}
+>
+  View All
+  {stats.total > 0 ? (
+    <span
+      className="badge"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#4F46E5',
+        color: 'white',
+        borderRadius: '999px',
+        padding: '2px 8px',
+        fontSize: '11px',
+        fontWeight: 700,
+        minWidth: '20px',
+        transition: 'all 0.2s ease',
+      }}
+    >
+      {stats.total}
+    </span>
+  ) : (
+    <span style={{ fontSize: '13px' }}></span>
+  )}
+</button>
               </div>
               <div className="card-body">
                 {recentApplications.length === 0 ? (
-                  <div className="empty-state">
-                    <span className="icon">📭</span>
-                    No applications yet. Start browsing jobs!
+                  <div className="empty-state" style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '24px 0'
+                  }}>
+                    <ApplicantNotesIcon size={48} color="#c7d2fe" />
+                    <span style={{ fontSize: '13px', color: '#6c757d', marginTop: '10px' }}>
+                      No applications yet. Start browsing jobs!
+                    </span>
                   </div>
                 ) : (
                   recentApplications.map((app) => {
@@ -542,26 +547,57 @@ const profilePercent = Math.round((completedChecks / profileChecks.length) * 100
               </div>
             </div>
 
-            {/* Latest Openings Grid */}
+            {/* More Openings */}
             <div className="dashboard-card">
               <div className="card-header">
-                <h3>🔥 More Openings</h3>
-                <span className="view-all" onClick={() => navigate('/applicant/jobs')}>
-                  Browse All →
-                </span>
+                <h3><FireIcon size={24} color="#DC2626" /> More Openings</h3>
+             <button
+  onClick={() => navigate('/applicant/jobs')}
+  style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '2px',
+    background: '#eef2ff',
+    color: '#4F46E5',
+    border: 'none',
+    borderRadius: '999px',
+    padding: '5px 14px',
+    fontSize: '12px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    fontFamily: 'inherit',
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.background = '#4F46E5';
+    e.currentTarget.style.color = 'white';
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.background = '#eef2ff';
+    e.currentTarget.style.color = '#4F46E5';
+  }}
+>
+  Browse All
+  <ChevronRightIcon size={14} />
+</button>
               </div>
               <div className="card-body">
                 {newJobs.length <= 1 ? (
-                  <div className="empty-state">
-                    <span className="icon">📭</span>
-                    No new job openings at the moment. Check back soon!
+                  <div className="empty-state" style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '24px 0'
+                  }}>
+                    <FireIcon size={48} color="#9ca3af" />
+                    <span style={{ fontSize: '13px', color: '#6c757d', marginTop: '10px' }}>
+                      No new job openings at the moment. Check back soon!
+                    </span>
                   </div>
                 ) : (
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                    gap: '12px'
-                  }}>
+                  <div className="openings-grid">
                     {newJobs.slice(1, 5).map((job) => (
                       <div
                         key={job.id}
@@ -607,179 +643,252 @@ const profilePercent = Math.round((completedChecks / profileChecks.length) * 100
                 )}
               </div>
             </div>
+
           </div>
 
-          {/* ─── RIGHT COLUMN (4 cols) ─── */}
-          <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* ─── RIGHT COLUMN ─── */}
+          <div className="magazine-right">
 
-            {/* Weather Widget */}
             <WeatherWidget />
 
-           {/* Profile Completeness */}
-<div className="dashboard-card">
-  <div className="card-header">
-    <h3>👤 Application Readiness</h3>
-  </div>
-  <div className="card-body">
-    {(() => {
-      // 🆕 REQUIRED checks (must be complete)
-      const requiredChecks = [
-        { label: 'Account created', done: true, href: null },
-        { label: 'Contact information filled', done: !!(userProfile?.phone && userProfile?.address), href: '/applicant/profile' },
-        { label: 'Personal Data Sheet uploaded', done: !!documents?.pds_file_url, href: '/applicant/profile' },
-      ];
-
-      // 🆕 OPTIONAL checks (nice to have)
-      const optionalChecks = [
-        { label: 'Transcript of Records', done: !!documents?.tor_file_url },
-        { label: 'Performance Rating', done: !!documents?.performance_rating_file_url },
-      ];
-
-      const requiredDone = requiredChecks.filter(c => c.done).length;
-      const requiredPercent = Math.round((requiredDone / requiredChecks.length) * 100);
-      const allRequiredDone = requiredDone === requiredChecks.length;
-      const optionalDone = optionalChecks.filter(c => c.done).length;
-
-      return (
-        <>
-          {/* Overall readiness — based on required only */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'baseline', 
-            gap: '8px', 
-            marginBottom: '4px' 
-          }}>
-            <div style={{ 
-              fontSize: '28px', 
-              fontWeight: 700, 
-              color: allRequiredDone ? '#0d9488' : requiredPercent >= 66 ? '#f59e0b' : '#dc2626'
-            }}>
-              {requiredPercent}%
-            </div>
-          
-          </div>
-          
-          <div style={{
-            height: '8px',
-            background: '#f0f0f0',
-            borderRadius: '4px',
-            overflow: 'hidden',
-            marginBottom: '16px'
-          }}>
-            <div style={{
-              width: `${requiredPercent}%`,
-              height: '100%',
-              background: allRequiredDone ? '#0d9488' : requiredPercent >= 66 ? '#f59e0b' : '#dc2626',
-              borderRadius: '4px',
-              transition: 'width 0.4s ease'
-            }} />
-          </div>
-
-          {/* REQUIRED section */}
-          <div style={{ 
-            fontSize: '11px', 
-            fontWeight: 700, 
-            color: '#6c757d', 
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            marginBottom: '8px'
-          }}>
-            Basics
-          </div>
-          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px 0', fontSize: '13px', lineHeight: 1.9 }}>
-            {requiredChecks.map((check, i) => (
-              <li 
-                key={i} 
-                style={{ 
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  color: check.done ? '#0d9488' : '#6c757d',
-                  cursor: check.href && !check.done ? 'pointer' : 'default'
-                }}
-                onClick={() => {
-                  if (check.href && !check.done) navigate(check.href);
-                }}
-              >
-                <span>{check.done ? '✓' : '○'}</span>
-                <span style={{ flex: 1 }}>{check.label}</span>
-                {!check.done && check.href && (
-                  <span style={{ fontSize: '11px', color: '#4F46E5', fontWeight: 600 }}>
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-
-          {/* OPTIONAL section */}
-          <div style={{ 
-            fontSize: '11px', 
-            fontWeight: 700, 
-            color: '#6c757d', 
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            marginBottom: '8px'
-          }}>
-            Optional (for some jobs)
-          </div>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', lineHeight: 1.9 }}>
-            {optionalChecks.map((check, i) => (
-              <li 
-                key={i} 
-                style={{ 
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  color: check.done ? '#0d9488' : '#9ca3af',
-                }}
-              >
-                <span>{check.done ? '✓' : '○'}</span>
-                <span style={{ flex: 1 }}>{check.label}</span>
-                {check.done && (
-                  <span style={{ fontSize: '11px', color: '#0d9488', fontWeight: 600 }}>
-                    
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-
-          {/* Success message only when required is done */}
-          {allRequiredDone && (
-            <div style={{
-              marginTop: '16px',
-              padding: '10px 12px',
-              background: '#dcfce7',
-              border: '1px solid #bbf7d0',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#166534',
-              fontWeight: 500
-            }}>
-              ✅ You're ready to apply to jobs!
-              {optionalDone < optionalChecks.length && (
-                <div style={{ marginTop: '4px', fontWeight: 400, fontSize: '11px' }}>
-                  Add optional docs to expand job eligibility.
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      );
-    })()}
-  </div>
+            {/* Application Readiness */}
+           <div
+  className="dashboard-card"
+  style={{
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(79, 70, 229, 0.06)',
+  }}
+>
+  <div className="card-header" style={{
+  background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+  padding: '16px 20px',
+  borderBottom: '1px solid #bfdbfe',
+  borderRadius: '12px 12px 0 0'
+}}>
+  <h3>
+    <AccountUserRoundIcon size={38} color="#4F46E5" style={{ width: 28, height: 28, flexShrink: 0 }} />
+    Application Readiness
+  </h3>
 </div>
+              <div className="card-body">
+                {(() => {
+                  const requiredChecks = [
+                    { label: 'Account created', done: true, href: null },
+                    { label: 'Contact information filled', done: !!(userProfile?.phone && userProfile?.address), href: '/applicant/profile' },
+                    { label: 'Personal Data Sheet uploaded', done: !!documents?.pds_file_url, href: '/applicant/profile' },
+                  ];
+
+                  const optionalChecks = [
+                    { label: 'Transcript of Records', done: !!documents?.tor_file_url },
+                    { label: 'Performance Rating', done: !!documents?.performance_rating_file_url },
+                  ];
+
+                  const requiredDone = requiredChecks.filter(c => c.done).length;
+                  const requiredPercent = Math.round((requiredDone / requiredChecks.length) * 100);
+                  const allRequiredDone = requiredDone === requiredChecks.length;
+                  const optionalDone = optionalChecks.filter(c => c.done).length;
+
+                  return (
+                    <>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'baseline', 
+                        gap: '8px', 
+                        marginBottom: '4px' 
+                      }}>
+                        <div style={{ 
+                          fontSize: '28px', 
+                          fontWeight: 700, 
+                          color: allRequiredDone ? '#0d9488' : requiredPercent >= 66 ? '#f59e0b' : '#dc2626'
+                        }}>
+                          {requiredPercent}%
+                        </div>
+                      </div>
+                      
+                      <div style={{
+                        height: '8px',
+                        background: '#f0f0f0',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                        marginBottom: '16px'
+                      }}>
+                        <div style={{
+                          width: `${requiredPercent}%`,
+                          height: '100%',
+                          background: allRequiredDone ? '#0d9488' : requiredPercent >= 66 ? '#f59e0b' : '#dc2626',
+                          borderRadius: '4px',
+                          transition: 'width 0.4s ease'
+                        }} />
+                      </div>
+
+                      <div style={{ 
+                        fontSize: '11px', 
+                        fontWeight: 700, 
+                        color: '#6c757d', 
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        marginBottom: '8px'
+                      }}>
+                        Basics
+                      </div>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px 0', fontSize: '13px', lineHeight: 1.9 }}>
+                        {requiredChecks.map((check, i) => (
+                          <li 
+                            key={i} 
+                            style={{ 
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              color: check.done ? '#0d9488' : '#6c757d',
+                              cursor: check.href && !check.done ? 'pointer' : 'default'
+                            }}
+                            onClick={() => {
+                              if (check.href && !check.done) navigate(check.href);
+                            }}
+                          >
+                            <span>{check.done ? '✓' : '○'}</span>
+                            <span style={{ flex: 1 }}>{check.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div style={{ 
+                        fontSize: '11px', 
+                        fontWeight: 700, 
+                        color: '#6c757d', 
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        marginBottom: '8px'
+                      }}>
+                        Optional (for some jobs)
+                      </div>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', lineHeight: 1.9 }}>
+                        {optionalChecks.map((check, i) => (
+                          <li 
+                            key={i} 
+                            style={{ 
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              color: check.done ? '#0d9488' : '#9ca3af',
+                            }}
+                          >
+                            <span>{check.done ? '✓' : '○'}</span>
+                            <span style={{ flex: 1 }}>{check.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {allRequiredDone && (
+                        <div style={{
+                          marginTop: '16px',
+                          padding: '10px 12px',
+                          background: '#dcfce7',
+                          border: '1px solid #bbf7d0',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          color: '#166534',
+                          fontWeight: 500
+                        }}>
+                          ✅ You're ready to apply to jobs!
+                          {optionalDone < optionalChecks.length && (
+                            <div style={{ marginTop: '4px', fontWeight: 400, fontSize: '11px' }}>
+                              Add optional docs to expand job eligibility.
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
 
             {/* Upcoming Interviews */}
             <div className="dashboard-card">
-              <div className="card-header">
-                <h3>📅 Upcoming Interviews</h3>
-              </div>
+      <div className="card-header" style={{
+background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+  padding: '16px 20px',
+ borderBottom: '1px solid #e2e8f0',
+  borderRadius: '12px 12px 0 0',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+borderBottom: '1px solid #bfdbfe',
+  gap: '12px'
+
+}}>
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    minWidth: 0
+  }}>
+    <div style={{
+      width: '36px',
+      height: '36px',
+      borderRadius: '10px',
+      background: 'white',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+      boxShadow: '0 2px 6px rgba(79,70,229,0.12)'
+    }}>
+      <CalendarBookMarkIcon
+        size={18}
+        color="#1a3a5c"
+      />
+    </div>
+    <div>
+      <div style={{
+        fontSize: '11px',
+        fontWeight: 700,
+        color: '#1a3a5c',
+        letterSpacing: '1px',
+        textTransform: 'uppercase',
+        lineHeight: 1.2
+      }}>
+        Upcoming Interviews
+      </div>
+      <div style={{
+        fontSize: '12px',
+        color: '#6c757d',
+        marginTop: '2px'
+      }}>
+        Scheduled meetings
+      </div>
+    </div>
+  </div>
+
+  {upcomingInterviews.length > 0 && (
+    <span style={{
+      background: '#2563eb',
+      color: 'white',
+      padding: '3px 10px',
+      borderRadius: '999px',
+      fontSize: '11px',
+      fontWeight: 700,
+      flexShrink: 0
+    }}>
+      {upcomingInterviews.length}
+    </span>
+  )}
+</div>
               <div className="card-body">
                 {upcomingInterviews.length === 0 ? (
-                  <div className="empty-state">
-                    <span className="icon">📅</span>
-                    No upcoming interviews
+                  <div className="empty-state" style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '24px 0'
+                  }}>
+                    <ApplicantClockIcon size={48} color="#c7d2fe" />
+                    <span style={{ fontSize: '13px', color: '#6c757d', marginTop: '10px' }}>
+                      No upcoming interviews
+                    </span>
                   </div>
                 ) : (
                   upcomingInterviews.map((interview) => (
@@ -804,20 +913,91 @@ const profilePercent = Math.round((completedChecks / profileChecks.length) * 100
 
             {/* Notifications */}
             <div className="dashboard-card">
-              <div className="card-header">
-                <h3>
-                  <img src={mailBlackLogo} alt="" className="mail-black-icon" />
-                  Notifications
-                </h3>
-                <span className="view-all" onClick={() => navigate('/applicant/applications')}>
-                  View All →
-                </span>
-              </div>
+         <div className="card-header" style={{
+  background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+  padding: '16px 20px',
+ borderBottom: '1px solid #bfdbfe',
+  borderRadius: '12px 12px 0 0',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: '12px'
+}}>
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    minWidth: 0
+  }}>
+    <div style={{
+      width: '36px',
+      height: '36px',
+      borderRadius: '10px',
+      background: 'white',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+      boxShadow: '0 2px 6px rgba(79,70,229,0.12)'
+    }}>
+      <img 
+        src={mailBlackLogo} 
+        alt="" 
+        style={{ 
+          width: '18px', 
+          height: '18px',
+          // Navy color — matches your other icons
+          filter: 'brightness(0) saturate(100%) invert(15%) sepia(60%) saturate(800%) hue-rotate(180deg) brightness(95%) contrast(90%)'
+        }} 
+      />
+    </div>
+    <div>
+      <div style={{
+        fontSize: '11px',
+        fontWeight: 700,
+        color: '#1a3a5c',                  // ← navy label
+        letterSpacing: '1px',
+        textTransform: 'uppercase',
+        lineHeight: 1.2
+      }}>
+        Notifications
+      </div>
+      <div style={{ 
+        fontSize: '12px', 
+        color: '#6c757d',
+        marginTop: '2px'
+      }}>
+        Latest updates
+      </div>
+    </div>
+  </div>
+
+ <span style={{
+  fontSize: '36px',
+  fontWeight: 800,
+  color: '#1a3a5c',
+  lineHeight: 1,
+  opacity: 0.3,
+  flexShrink: 0
+}}>
+  {recentNotifications.length.toString().padStart(2, '0')}
+</span>
+</div>
               <div className="card-body notifications-body">
                 {recentNotifications.length === 0 ? (
-                  <div className="empty-state">
-                    <span className="icon">🔕</span>
-                    No notifications yet
+                  <div className="notification-empty" style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    padding: '24px 0',
+                    textAlign: 'center'
+                  }}>
+                    <NotificationIconApplicant size={48} color="#c7d2fe" />
+                    <span style={{ fontSize: '13px', color: '#6c757d' }}>
+                      No notifications yet
+                    </span>
                   </div>
                 ) : (
                   recentNotifications.map((notification) => (
@@ -833,6 +1013,8 @@ const profilePercent = Math.round((completedChecks / profileChecks.length) * 100
               </div>
             </div>
 
+            
+
             {/* Career Tips */}
             <div className="dashboard-card">
               <div className="card-header">
@@ -840,10 +1022,9 @@ const profilePercent = Math.round((completedChecks / profileChecks.length) * 100
               </div>
               <div className="card-body">
                 <ul style={{ paddingLeft: '20px', margin: 0, lineHeight: 1.9, fontSize: '13px', color: '#4a5568' }}>
-                  <li>Tailor your resume to each job posting</li>
+                  <li>Upload your PDS once — reuse it for every application</li>
                   <li>Apply early — first applicants often get priority</li>
-                  <li>Complete your profile to boost your AI match score</li>
-                  <li>Prepare your PDS and Transcripts in advance</li>
+                  <li>Review job qualifications before applying</li>
                   <li>Check your email regularly for updates</li>
                 </ul>
               </div>
