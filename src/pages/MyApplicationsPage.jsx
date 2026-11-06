@@ -654,71 +654,273 @@ const handleWithdraw = async (application) => {
                 </div>
               </div>
 
-              {/* AI Assessment */}
-              {selectedApplication.ai_match_score && (
-                <div className="detail-section">
-                  <h4>AI Assessment</h4>
-                  
-                  <div className="ai-assessment-section">
-                    <div style={{ marginBottom: '12px' }}>
-                      <span style={{ fontSize: '12px', color: '#6c757d' }}>Suitability Score</span>
-                      <div className="ai-score-large">
-                        {selectedApplication.ai_explanation?.percentage || selectedApplication.ai_match_score}%
-                      </div>
-                      {selectedApplication.ai_explanation?.requirements_met && (
-                        <div className="ai-score-subtitle">
-                          {selectedApplication.ai_explanation.requirements_met} requirements met
-                        </div>
-                      )}
+            
+             
+{/* AI Assessment - Redesigned */}
+{(
+  selectedApplication.ai_match_score != null ||
+  selectedApplication.ai_explanation?.percentage != null
+) && (
+  <div className="detail-section ai-detail-section">
+
+    <div className="ai-assessment-card">
+
+      {/* HEADER */}
+      <div className="ai-header">
+        <div className="ai-header-left">
+          <div className="ai-icon">
+            ✦
+          </div>
+
+          <div>
+            <h4> Assessment</h4>
+            <p>AI-assisted candidate evaluation</p>
+          </div>
+        </div>
+
+        <div className="analysis-status">
+          <span className="status-dot"></span>
+          Analysis Complete
+        </div>
+      </div>
+
+      {/* SCORE HERO */}
+      <div className="ai-score-card">
+
+        <div className="score-content">
+
+          <div
+            className="score-circle"
+            style={{
+              "--score": `${
+                Math.min(
+                  100,
+                  Math.max(0, Number(getDisplayScore(selectedApplication)) || 0)
+                )
+              }%`
+            }}
+          >
+            <div className="score-circle-inner">
+              <span className="score-number">
+                {getDisplayScore(selectedApplication)}
+                <small>%</small>
+              </span>
+
+              <span className="score-label">
+                Fit Score
+              </span>
+            </div>
+          </div>
+
+          <div className="score-details">
+
+            <span className={`match-badge ${
+              Number(getDisplayScore(selectedApplication)) >= 80
+                ? "strong"
+                : Number(getDisplayScore(selectedApplication)) >= 60
+                ? "moderate"
+                : "low"
+            }`}>
+              {
+                Number(getDisplayScore(selectedApplication)) >= 80
+                  ? "Strong Match"
+                  : Number(getDisplayScore(selectedApplication)) >= 60
+                  ? "Moderate Match"
+                  : "Low Match"
+              }
+            </span>
+
+            <h3>Candidate Compatibility</h3>
+
+            <p>
+              {
+                Number(getDisplayScore(selectedApplication)) >= 80
+                  ? "High compatibility with the specified job requirements."
+                  : Number(getDisplayScore(selectedApplication)) >= 60
+                  ? "Some qualifications may require further review."
+                  : "Several qualifications require further evaluation."
+              }
+            </p>
+
+            {getRequirementsMetDisplay(selectedApplication) != null && (
+              <div className="score-note">
+                <span>ⓘ</span>
+                {getRequirementsMetDisplay(selectedApplication)} requirements met
+              </div>
+            )}
+
+          </div>
+        </div>
+      </div>
+
+      {/* QUALIFICATION BREAKDOWN */}
+      {selectedApplication.ai_explanation?.breakdown &&
+        Object.keys(selectedApplication.ai_explanation.breakdown).some(
+          key => !(
+            selectedApplication.ai_explanation.breakdown[key].status &&
+            selectedApplication.ai_explanation.breakdown[key].status
+              .toUpperCase().includes("NOT REQUIRED")
+          )
+        ) && (
+
+        <div className="ai-breakdown-section">
+
+          <div className="ai-section-heading">
+            <div>
+              <h5>Qualification Breakdown</h5>
+              <p>Assessment of individual job qualifications</p>
+            </div>
+
+            <span className="section-tag">
+              {Object.entries(
+                selectedApplication.ai_explanation.breakdown
+              ).filter(([key, value]) =>
+                !(value.status &&
+                  value.status.toUpperCase().includes("NOT REQUIRED"))
+              ).length} Criteria
+            </span>
+          </div>
+
+          <div className="ai-breakdown-list">
+
+            {Object.entries(
+              selectedApplication.ai_explanation.breakdown
+            ).map(([key, value]) => {
+
+              if (
+                value.status &&
+                value.status.toUpperCase().includes("NOT REQUIRED")
+              ) {
+                return null;
+              }
+
+              const isMet = isRequirementMet(value);
+
+              const isNotMet = value.status &&
+                value.status.toUpperCase().includes("NOT MET");
+
+              const displayText = getBreakdownDisplay(key, value);
+
+              const rawProgress = Number(value.progress);
+
+              const hasProgress =
+                value.progress !== null &&
+                value.progress !== undefined &&
+                Number.isFinite(rawProgress);
+
+              const progressPercent = hasProgress
+                ? Math.min(
+                    100,
+                    Math.max(0, rawProgress <= 1
+                      ? rawProgress * 100
+                      : rawProgress)
+                  )
+                : 0;
+
+              return (
+                <div className="ai-breakdown-row" key={key}>
+
+                  <div className="ai-breakdown-top">
+
+                    <div className="ai-breakdown-name">
+                      <span className="ai-breakdown-dot"></span>
+                      {key}
                     </div>
 
-                    {/* Breakdown */}
-                    {selectedApplication.ai_explanation?.breakdown && Object.keys(selectedApplication.ai_explanation.breakdown).length > 0 && (
-                      <div style={{ marginTop: '8px' }}>
-                        <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '6px' }}>Breakdown</div>
-                        {Object.entries(selectedApplication.ai_explanation.breakdown).map(([key, value]) => {
-                          // Skip if NOT REQUIRED
-                          if (value.status && value.status.toUpperCase().includes('NOT REQUIRED')) {
-                            return null;
-                          }
-                          // Use the helper function to check if requirement is met
-                          const isMet = isRequirementMet(value);
-                          const displayText = getBreakdownDisplay(key, value);
-                          // Get progress percentage for display
-                          const progressPercent = value.progress ? Math.round(value.progress * 100) : 0;
-                          return (
-                            <div key={key} className="breakdown-item">
-                              <span>{key}</span>
-                              <span className={isMet ? 'breakdown-met' : 'breakdown-partial'}>
-                                {displayText}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                    <span className={`ai-breakdown-status ${
+                      isNotMet
+                        ? "not-met"
+                        : isMet
+                        ? "met"
+                        : "partial"
+                    }`}>
+                      {isNotMet
+                        ? "Needs Review"
+                        : isMet
+                        ? "Requirement Met"
+                        : "Partial Match"}
+                    </span>
 
-                    {/* Summary - Applicant-facing */}
-                    {selectedApplication.ai_explanation?.summary && (
-                      <div style={{ marginTop: '8px', fontSize: '13px', color: '#6c757d' }}>
-                      </div>
-                    )}
-
-                    {/* Recommendations - UPDATED with formatEducationRecommendation */}
-                    {selectedApplication.ai_explanation?.recommendations && 
-                     selectedApplication.ai_explanation.recommendations.length > 0 && (
-                      <div className="ai-recommendations">
-                        <div style={{ fontWeight: 600 }}>Recommendations</div>
-                        <ul>
-                          {selectedApplication.ai_explanation.recommendations.map((rec, idx) => (
-                            <li key={idx}>{formatEducationRecommendation(rec)}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </div>
+
+                  {hasProgress && (
+                    <div className="ai-progress-track">
+                      <div
+                        className={`ai-progress-fill ${
+                          isNotMet
+                            ? "progress-warning"
+                            : isMet
+                            ? "progress-success"
+                            : "progress-partial"
+                        }`}
+                        style={{
+                          width: `${progressPercent}%`
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="ai-breakdown-description">
+                    {displayText}
+                  </div>
+
                 </div>
-              )}
+              );
+            })}
+
+          </div>
+        </div>
+      )}
+
+     
+
+      {/* RECOMMENDATIONS */}
+      {selectedApplication.ai_explanation?.recommendations?.length > 0 && (
+        <div className="ai-recommendations redesigned-recommendations">
+
+          <div className="recommendations-heading">
+            <span className="recommendations-icon">ⓘ</span>
+
+            <div>
+              <h5>Recommendations</h5>
+              <p>Areas that may need further attention</p>
+            </div>
+          </div>
+
+          <ul>
+            {selectedApplication.ai_explanation.recommendations.map(
+              (rec, idx) => (
+                <li key={idx}>
+                  {formatEducationRecommendation(rec)}
+                </li>
+              )
+            )}
+          </ul>
+
+        </div>
+      )}
+
+      {/* DISCLAIMER */}
+      <div className="ai-disclaimer">
+        <span className="disclaimer-icon">ⓘ</span>
+
+        <p>
+          <strong>Important Notice:</strong> This generated
+          assessment is intended to assist in evaluating
+          applicant qualifications. It does not constitute
+          a final hiring decision. Assessment results should
+          be reviewed and validated by authorized HR personnel.
+        </p>
+      </div>
+
+
+
+    </div>
+  </div>
+)}
+
+
+
 
     {/* Qualifications Required */}
 <div className="detail-section">

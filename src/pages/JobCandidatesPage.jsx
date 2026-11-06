@@ -1657,81 +1657,244 @@ setBulkUpdating(false);
       </div>
 
       {/* XAI Explanation Modal */}
-      {showExplainModal && selectedForExplain && (
-        <div className="modal-overlay" onClick={() => setShowExplainModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-             <h3 style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-  <MagnifyingGlassPlumpIcon size={26} style={{ color: '#1a56db' }} />
-  XAI Explanation
-</h3>
-              <button className="close-modal" onClick={() => setShowExplainModal(false)}>×</button>
+{showExplainModal && selectedForExplain && (
+  <div className="modal-overlay" onClick={() => setShowExplainModal(false)}>
+    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      
+      {/* Header */}
+      <div className="modal-header">
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '39px',
+            height: '39px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, #4f46e5, #818cf8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <MagnifyingGlassPlumpIcon size={20} style={{ color: 'white' }} />
+          </div>
+          XAI Explanation
+        </h3>
+        <button className="close-modal" onClick={() => setShowExplainModal(false)}>×</button>
+      </div>
+
+      <div className="modal-body">
+
+        {/* AI Assessment Card (mirrors applicant style) */}
+        <div className="ai-assessment-card">
+
+          {/* AI Header with Status */}
+          <div className="ai-header">
+            <div className="ai-header-left">
+              <div className="ai-icon">✦</div>
+              <div>
+                <h4>{selectedForExplain.applicant_name}</h4>
+                <p>Rank: #{selectedForExplain.rank}</p>
+              </div>
             </div>
-            <div className="modal-body">
-              <div style={{ marginBottom: 16 }}>
-                <strong style={{ fontSize: 18, color: '#1a1f36' }}>
-                  {selectedForExplain.applicant_name}
-                </strong>
-                <span style={{ marginLeft: 12, fontSize: 14, color: '#6c757d' }}>
-                  Rank: #{selectedForExplain.rank}
+            <div className="analysis-status">
+              <span className="status-dot"></span>
+              Analysis Complete
+            </div>
+          </div>
+
+          {/* Score Hero Card */}
+          <div className="ai-score-card">
+            <div className="score-content">
+              
+              {/* Score Circle */}
+              <div
+                className="score-circle"
+                style={{
+                  "--score": `${Math.min(100, Math.max(0, Number(selectedForExplain.ai_match_score) || 0))}%`
+                }}
+              >
+                <div className="score-circle-inner">
+                  <span className="score-number">
+                    {selectedForExplain.ai_match_score}
+                    <small>%</small>
+                  </span>
+                  <span className="score-label">Fit Score</span>
+                </div>
+              </div>
+
+              {/* Score Details */}
+              <div className="score-details">
+                <span className={`match-badge ${
+                  Number(selectedForExplain.ai_match_score) >= 80 ? 'strong'
+                  : Number(selectedForExplain.ai_match_score) >= 60 ? 'moderate'
+                  : 'low'
+                }`}>
+                  {Number(selectedForExplain.ai_match_score) >= 80 ? 'Strong Match'
+                   : Number(selectedForExplain.ai_match_score) >= 60 ? 'Moderate Match'
+                   : 'Low Match'}
                 </span>
-              </div>
-
-              <div className="explanation-container">
-                <div className="explanation-score" style={{ color: getScoreColor(selectedForExplain.ai_match_score) }}>
-                  Suitability Score: {selectedForExplain.ai_match_score}%
-                </div>
-
-                <div className="requirements-met">
-                  Requirements Met: {selectedForExplain.explanation.requirements_met || '0/0'}
-                </div>
-
-                <div className="explanation-section-title">Contributing Factors:</div>
-                {selectedForExplain.explanation.contributing_factors.map((factor, idx) => (
-                  <div key={idx} className="explanation-factor">✓ {factor}</div>
-                ))}
-
-                {selectedForExplain.explanation.score_reduced.length > 0 && (
-                  <>
-                    <div className="explanation-section-title">Score reduced because:</div>
-                    {selectedForExplain.explanation.score_reduced.map((factor, idx) => (
-                      <div key={idx} className="explanation-factor-reduced">• {factor}</div>
-                    ))}
-                  </>
+                <h3>Candidate Compatibility</h3>
+                <p>
+                  {Number(selectedForExplain.ai_match_score) >= 80
+                    ? 'High compatibility with the specified job requirements.'
+                    : Number(selectedForExplain.ai_match_score) >= 60
+                    ? 'Some qualifications may require further review.'
+                    : 'Several qualifications require further evaluation.'}
+                </p>
+                {selectedForExplain.explanation.requirements_met && (
+                  <div className="score-note">
+                    <span>ⓘ</span>
+                    {selectedForExplain.explanation.requirements_met} requirements met
+                  </div>
                 )}
-            <div className="explanation-summary">
-  {buildSummary(selectedForExplain)}
-</div>
-              </div>
-
-              <div className="modal-actions">
-             <button 
-  className="close-btn" 
-  onClick={() => setShowExplainModal(false)}
-  style={{
-    background: '#D3F0F9',
-    color: '#1a3a5c',
-    border: 'none',
-    borderRadius: '6px',
-    padding: '8px 24px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    transition: 'background 0.2s ease'
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.background = '#b8e4f0';
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.background = '#D3F0F9';
-  }}
->
-  Close
-</button>
               </div>
             </div>
           </div>
+
+     {selectedForExplain.explanation.contributing_factors?.length > 0 && (
+  <div style={{ marginBottom: '16px' }}>
+    <div style={{ fontSize: '12px', fontWeight: 700, color: '#166534', marginBottom: '10px' }}>
+      Contributing Factors
+    </div>
+    {selectedForExplain.explanation.contributing_factors.map((factor, idx) => (
+      <div key={idx} style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '12px',
+        padding: '10px 0'
+      }}>
+        <span style={{
+          width: '24px',
+          height: '24px',
+          borderRadius: '50%',
+          background: '#dcfce7',
+          color: '#16a34a',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '12px',
+          fontWeight: 700,
+          flexShrink: 0
+        }}>✓</span>
+        <span style={{ fontSize: '13px', color: '#1e293b', lineHeight: 1.5, paddingTop: '3px' }}>{factor}</span>
+      </div>
+    ))}
+  </div>
+)}
+
+{selectedForExplain.explanation.score_reduced?.length > 0 && (
+  <div style={{ marginBottom: '16px' }}>
+    <div style={{ fontSize: '12px', fontWeight: 700, color: '#92400e', marginBottom: '10px' }}>
+      Score Reduced Because
+    </div>
+    {selectedForExplain.explanation.score_reduced.map((factor, idx) => (
+      <div key={idx} style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '12px',
+        padding: '10px 0'
+      }}>
+        <span style={{
+          width: '24px',
+          height: '24px',
+          borderRadius: '50%',
+          background: '#fef3c7',
+          color: '#b45309',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '12px',
+          fontWeight: 700,
+          flexShrink: 0
+        }}>!</span>
+        <span style={{ fontSize: '13px', color: '#1e293b', lineHeight: 1.5, paddingTop: '3px' }}>{factor}</span>
+      </div>
+    ))}
+  </div>
+)}
+
+          {/* Summary */}
+          <div className="ai-explanation">
+            <div className="explanation-heading">
+              <div className="explanation-icon">✦</div>
+              <div>
+                <h5>Assessment Summary</h5>
+                <p>Overall evaluation</p>
+              </div>
+            </div>
+            <p className="explanation-text">
+              {buildSummary(selectedForExplain)}
+            </p>
+          </div>
+
+          {/* Disclaimer */}
+          <div className="ai-disclaimer">
+            <span className="disclaimer-icon">ⓘ</span>
+            <p>
+              <strong>Important Notice:</strong> This generated assessment is intended to assist in evaluating
+              applicant qualifications. It does not constitute a final hiring decision. Assessment results
+              should be reviewed and validated by authorized HR personnel.
+            </p>
+          </div>
+
+{/* 🆕 Model Classification - Below Disclaimer */}
+{(() => {
+  const score = Number(selectedForExplain.ai_match_score) || 0;
+  const verdict = score >= 74 ? 'FIT' : 'NOT FIT';
+  const isFit = verdict === 'FIT';
+//FALL BACK IF SOMETHING WENT WRONG WITH ASSESMENT
+
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'flex-end',
+      marginTop: '12px'
+    }}>
+      <span style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '5px 12px',
+        borderRadius: '999px',
+        fontSize: '11px',
+        fontWeight: 700,
+        letterSpacing: '0.3px',
+background: isFit ? '#f0fdf4' : '#fffbeb',
+color: isFit ? '#15803d' : '#a16207',
+border: `1px solid ${isFit ? '#bbf7d0' : '#fde68a'}`
+      }}>
+        Model Classification: {verdict}
+      </span>
+    </div>
+  );
+})()}
         </div>
-      )}
+
+        {/* Actions */}
+        <div className="modal-actions">
+          <button
+            className="close-btn"
+            onClick={() => setShowExplainModal(false)}
+            style={{
+              background: '#D3F0F9',
+              color: '#1a3a5c',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '8px 24px',
+              cursor: 'pointer',
+              fontWeight: '500',
+              transition: 'background 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#b8e4f0'}
+            onMouseLeave={(e) => e.currentTarget.style.background = '#D3F0F9'}
+          >
+            Close
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+)}
 
 
 {/* Bulk Update Success Notification */} {bulkUpdateSuccessMessage && 
